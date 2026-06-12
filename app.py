@@ -9,10 +9,24 @@ st.title("📊 Employee Attrition Dashboard")
 # ---------------- LOAD DATA ----------------
 df = pd.read_excel("Palo Alto Networks.xlsx")
 
-# ---------------- CLEAN DATA ----------------
-df['Attrition'] = df['Attrition'].astype(str).str.strip().str.title()
-df['Attrition'] = df['Attrition'].map({'Yes': 1, 'No': 0})
+# ---------------- CHECK COLUMNS (DEBUG SAFETY) ----------------
+st.write("Columns in dataset:", df.columns)
+
+# ---------------- CLEAN COLUMN NAMES ----------------
+df.columns = df.columns.str.strip()
+
+# ---------------- CLEAN ATTRITION ----------------
+df['Attrition'] = df['Attrition'].astype(str).str.strip().str.lower()
+
+df['Attrition'] = df['Attrition'].map({
+    'yes': 1,
+    'no': 0
+})
+
 df['Attrition'] = df['Attrition'].fillna(0).astype(int)
+
+# ---------------- FINAL CHECK ----------------
+st.write("Attrition value counts:", df['Attrition'].value_counts())
 
 # ---------------- KPI ----------------
 attrition_rate = df['Attrition'].mean() * 100
@@ -23,49 +37,59 @@ col2.metric("Attrition Rate (%)", round(attrition_rate, 2))
 
 st.divider()
 
-# ---------------- TABLE ----------------
-st.subheader("Raw Data")
+# ---------------- RAW DATA ----------------
+st.subheader("Dataset Preview")
 st.dataframe(df)
 
 st.divider()
 
-# ---------------- DEPARTMENT WISE ----------------
+# ---------------- DEPARTMENT CHART ----------------
 st.subheader("Attrition by Department")
 
-dept = df.groupby("Department")["Attrition"].mean() * 100
+if "Department" in df.columns:
 
-fig, ax = plt.subplots()
-ax.bar(dept.index, dept.values, color="skyblue")
-ax.set_ylabel("Attrition %")
-ax.set_xlabel("Department")
+    dept = df.groupby("Department")["Attrition"].mean() * 100
+    dept = dept.dropna()
 
-st.pyplot(fig)
+    fig, ax = plt.subplots()
+    ax.bar(dept.index.astype(str), dept.values, color="skyblue")
+    ax.set_ylabel("Attrition %")
+    ax.set_xlabel("Department")
+
+    st.pyplot(fig)
+
+else:
+    st.error("Department column not found")
 
 st.divider()
 
-# ---------------- JOB ROLE WISE ----------------
+# ---------------- JOB ROLE CHART ----------------
 st.subheader("Attrition by Job Role")
 
-role = df.groupby("JobRole")["Attrition"].mean() * 100
+if "JobRole" in df.columns:
 
-fig2, ax2 = plt.subplots()
-ax2.bar(role.index, role.values, color="orange")
-ax2.set_ylabel("Attrition %")
-ax2.set_xlabel("Job Role")
-plt.xticks(rotation=45)
+    role = df.groupby("JobRole")["Attrition"].mean() * 100
+    role = role.dropna()
 
-st.pyplot(fig2)
+    fig2, ax2 = plt.subplots()
+    ax2.bar(role.index.astype(str), role.values, color="orange")
+    ax2.set_ylabel("Attrition %")
+    ax2.set_xlabel("Job Role")
+    plt.xticks(rotation=45)
+
+    st.pyplot(fig2)
+
+else:
+    st.error("JobRole column not found")
 
 st.divider()
 
-# ---------------- DOWNLOAD REPORT ----------------
-report = df.copy()
-
-csv = report.to_csv(index=False).encode('utf-8')
+# ---------------- DOWNLOAD ----------------
+csv = df.to_csv(index=False).encode("utf-8")
 
 st.download_button(
-    label="📥 Download Full Dataset",
+    "📥 Download Clean Dataset",
     data=csv,
-    file_name="attrition_report.csv",
+    file_name="attrition_clean_data.csv",
     mime="text/csv"
 )
