@@ -35,3 +35,16 @@ gender = df.groupby("Gender")["Attrition"].mean() * 100
 fig2, ax2 = plt.subplots()
 gender.plot(kind="bar", ax=ax2)
 st.pyplot(fig2)
+import matplotlib.pyplot as plt
+
+dept_attrition.plot(kind='bar')
+plt.title("Attrition by Department")
+plt.show()
+import seaborn as sns
+
+heatmap_data = df.pivot_table(values='Attrition',
+                             index='Department',
+                             columns='JobRole')
+
+sns.heatmap(heatmap_data, annot=True)
+plt.show()
